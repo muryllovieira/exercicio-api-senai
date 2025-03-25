@@ -14,3 +14,4 @@
 - [ ]  Opcionais
     - [ ]  Adicionar modal de confirmação para exclusão do Post
     - [ ]  Implementar scroll infinito, para carregar os dados de maneira paginada
+    - [ ]  Implementar Dark Mode
