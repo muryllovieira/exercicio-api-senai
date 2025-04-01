@@ -1,4 +1,5 @@
 import { CreatePostRequest } from "@/model/create-post.request";
+import { EditPostRequest } from "@/model/edit-post.request";
 import { GetPostsResponse } from "@/model/get-posts.response";
 import { RequestStatus } from "@/model/request.status";
 import { api } from "@/service/axios";
@@ -8,9 +9,12 @@ import { Alert } from "react-native";
 interface PostContextProps {
   getAllPosts: () => void;
   createPost: (data: CreatePostRequest) => void;
+  updatePost: (data: EditPostRequest, id: number) => void;
+
   createPostRequestStatus: RequestStatus;
   post: GetPostsResponse[];
   getAllPostsRequestStatus: RequestStatus;
+  updatePostRequestStatus: RequestStatus;
 }
 
 interface PostProviderProps {
@@ -32,10 +36,19 @@ export const PostProvider = ({ children }: PostProviderProps) => {
       status: "idle",
     });
 
+  const [updatePostRequestStatus, setUpdatePostRequestStatus] =
+    useState<RequestStatus>({
+      status: "idle",
+    });
+
   const [post, setPost] = useState<GetPostsResponse[]>([]);
 
   const [createPostRequest, setCreatePostRequest] = useState<CreatePostRequest>(
     {} as CreatePostRequest
+  );
+
+  const [updatePostRequest, setUpdatePostRequest] = useState<EditPostRequest>(
+    {} as EditPostRequest
   );
 
   const getAllPosts = async () => {
@@ -57,10 +70,20 @@ export const PostProvider = ({ children }: PostProviderProps) => {
     try {
       await api.post<CreatePostRequest>("posts", data);
       setCreatePostRequestStatus({ status: "succeeded" });
-      Alert.alert("criou");
     } catch (error) {
       console.error(error);
       setCreatePostRequestStatus({ status: "failed" });
+    }
+  };
+
+  const updatePost = async (data: EditPostRequest, id: number) => {
+    setUpdatePostRequestStatus({ status: "pending" });
+    try {
+      await api.patch<EditPostRequest>(`posts/${id}`, data);
+      setUpdatePostRequestStatus({ status: "succeeded" });
+    } catch (error) {
+      console.error(error);
+      setUpdatePostRequestStatus({ status: "failed" });
     }
   };
 
@@ -72,6 +95,8 @@ export const PostProvider = ({ children }: PostProviderProps) => {
         getAllPosts,
         createPost,
         createPostRequestStatus,
+        updatePost,
+        updatePostRequestStatus,
       }}
     >
       {children}

@@ -1,6 +1,9 @@
+import { AddPostModal } from "@/components/AddPostModal";
 import { BaseModal } from "@/components/BaseModal";
+import { EditPostModal } from "@/components/EditPostModal";
 import { Text, View } from "@/components/Themed";
 import { usePost } from "@/data/Post";
+import { EditPostRequest } from "@/model/edit-post.request";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
@@ -12,89 +15,80 @@ import {
 } from "react-native";
 
 export default function Index() {
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [postSelected, setPostSelected] = useState<EditPostRequest[]>([]);
 
-  const { getAllPosts, post, createPost, createPostRequestStatus } = usePost();
+  const { getAllPosts, post } = usePost();
 
   useEffect(() => {
     getAllPosts();
   }, []);
 
   const handleCreatePost = () => {
-    createPost({ title, body, userId: 1 });
-    setShowModal(false);
+    setShowAddModal(false);
+  };
+
+  const handleEditPost = () => {
+    setShowEditModal(false);
   };
 
   useEffect(() => {
-    if (createPostRequestStatus.status === "succeeded") {
-      console.log("criou" + createPostRequestStatus.status);
-    } else if (createPostRequestStatus.status === "failed") {
-      console.log("falhou" + createPostRequestStatus.status);
-    }
-  }, [createPostRequestStatus]);
+    console.log(postSelected.id);
+  }, [postSelected]);
 
   return (
-    <ScrollView>
-      <BaseModal visible={showModal} onRequestClose={() => setShowModal(false)}>
-        <Text style={styles.title}>Adicionar Post</Text>
-        <View style={styles.modalContainer}>
-          <TextInput
-            placeholder="Título"
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-          />
-          <TextInput
-            placeholder="Descrição"
-            style={styles.textArea}
-            multiline
-            value={body}
-            onChangeText={setBody}
-          />
+    <View>
+      <ScrollView>
+        <AddPostModal
+          visible={showAddModal}
+          onRequestClose={() => setShowAddModal(false)}
+          onSubmit={handleCreatePost}
+        />
+
+        <EditPostModal
+          postId={postSelected.id}
+          visible={showEditModal}
+          onRequestClose={() => setShowEditModal(false)}
+          onSubmit={handleEditPost}
+        />
+        <View lightColor="#F2F4F7" style={styles.container}>
+          {post.map((item, index) => (
+            <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.body}</Text>
+              <View style={styles.cardOptionContainer}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.cardOptionButton}
+                  onPress={() => {
+                    setShowEditModal(true);
+                    setPostSelected(item);
+                  }}
+                >
+                  <MaterialIcons name="edit" size={18} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.cardOptionButton}
+                >
+                  <MaterialIcons name="delete" size={18} color={"#d42626"} />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={styles.button}
-          onPress={handleCreatePost}
-        >
-          <Text style={styles.buttonText}>Adicionar</Text>
-        </TouchableOpacity>
-      </BaseModal>
-
-      <View lightColor="#F2F4F7" style={styles.container}>
-        {post.map((item, index) => (
-          <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.body}</Text>
-            <View style={styles.cardOptionContainer}>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                style={styles.cardOptionButton}
-                onPress={() => setShowModal(true)}
-              >
-                <MaterialIcons name="edit" size={18} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                style={styles.cardOptionButton}
-              >
-                <MaterialIcons name="delete" size={18} color={"#d42626"} />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={styles.addButton}
-          onPress={() => setShowModal(true)}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.addButton}
+        onPress={() => setShowAddModal(true)}
+      >
+        <Text style={styles.addButtonText}>+</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
