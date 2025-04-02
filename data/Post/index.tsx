@@ -10,11 +10,13 @@ interface PostContextProps {
   getAllPosts: () => void;
   createPost: (data: CreatePostRequest) => void;
   updatePost: (data: EditPostRequest, id: number) => void;
+  deletePost: (id: number) => void;
 
-  createPostRequestStatus: RequestStatus;
   post: GetPostsResponse[];
   getAllPostsRequestStatus: RequestStatus;
+  createPostRequestStatus: RequestStatus;
   updatePostRequestStatus: RequestStatus;
+  deletePostRequestStatus: RequestStatus;
 }
 
 interface PostProviderProps {
@@ -37,6 +39,11 @@ export const PostProvider = ({ children }: PostProviderProps) => {
     });
 
   const [updatePostRequestStatus, setUpdatePostRequestStatus] =
+    useState<RequestStatus>({
+      status: "idle",
+    });
+
+  const [deletePostRequestStatus, setDeletePostRequestStatus] =
     useState<RequestStatus>({
       status: "idle",
     });
@@ -87,6 +94,42 @@ export const PostProvider = ({ children }: PostProviderProps) => {
     }
   };
 
+  const deletePost = async (id: number) => {
+    setDeletePostRequestStatus({ status: "pending" });
+    try {
+      Alert.alert(
+        "Excluir Post",
+        "Deseja excluir este post?",
+        [
+          {
+            text: "Sim",
+            onPress: async () => {
+              try {
+                await api.delete(`posts/${id}`);
+                setDeletePostRequestStatus({ status: "succeeded" });
+                console.log(deletePostRequestStatus);
+              } catch (error) {
+                setDeletePostRequestStatus({ status: "failed" });
+                console.log(deletePostRequestStatus);
+              }
+            },
+          },
+          {
+            text: "Não",
+            onPress: () => {
+              setDeletePostRequestStatus({ status: "failed" }),
+                console.log(deletePostRequestStatus);
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      console.error(error);
+      setDeletePostRequestStatus({ status: "failed" });
+    }
+  };
+
   return (
     <PostContext.Provider
       value={{
@@ -97,6 +140,8 @@ export const PostProvider = ({ children }: PostProviderProps) => {
         createPostRequestStatus,
         updatePost,
         updatePostRequestStatus,
+        deletePost,
+        deletePostRequestStatus,
       }}
     >
       {children}

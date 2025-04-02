@@ -19,8 +19,6 @@ interface AddPostModalProps {
 export const AddPostModal = ({
   visible,
   onRequestClose,
-
-  onSubmit,
 }: AddPostModalProps) => {
   const [postSelected, setPostSelected] = useState<CreatePostRequest[]>([]);
   const [title, setTitle] = useState("");
@@ -28,7 +26,7 @@ export const AddPostModal = ({
 
   const { createPost, createPostRequestStatus } = usePost();
 
-  const postPost = () => {
+  const handlerCreate = () => {
     createPost({ title, body, userId: 1 });
     console.log(createPostRequestStatus);
   };
@@ -70,7 +68,7 @@ export const AddPostModal = ({
           activeOpacity={0.7}
           style={styles.button}
           onPress={() => {
-            onRequestClose(), postPost();
+            onRequestClose(), handlerCreate();
           }}
         >
           <Text style={styles.buttonText}>Adicionar</Text>

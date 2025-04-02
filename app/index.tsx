@@ -12,20 +12,56 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  useColorScheme,
 } from "react-native";
 
 export default function Index() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
   const [postSelected, setPostSelected] = useState<EditPostRequest[]>([]);
 
-  const { getAllPosts, post } = usePost();
+  const [allDataLoaded, setAllDataLoaded] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(5);
+
+  const { getAllPosts, post, deletePost, getAllPostsRequestStatus } = usePost();
+
+  const loadMoreData = () => {
+    if (loading || allDataLoaded) return;
+    if (postSelected.length === post.length) {
+      setAllDataLoaded(true);
+      return;
+    }
+
+    const nextPage = currentPage + 1;
+    const min = currentPage * pageSize;
+    const max = nextPage * pageSize;
+    const newData = post.slice(min, max);
+
+    if (newData.length === 0) {
+      setAllDataLoaded(true);
+    } else {
+      setPostSelected((prevData) =>
+        prevData ? [...prevData, ...newData] : newData
+      );
+      setCurrentPage(nextPage);
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     getAllPosts();
   }, []);
+
+  useEffect(() => {
+    const initialValue = post.slice(0, pageSize);
+    setPostSelected(initialValue);
+    setCurrentPage(1);
+  }, [post]);
 
   const handleCreatePost = () => {
     setShowAddModal(false);
@@ -35,52 +71,64 @@ export default function Index() {
     setShowEditModal(false);
   };
 
-  useEffect(() => {
-    console.log(postSelected.id);
-  }, [postSelected]);
+  useEffect(() => {}, [postSelected]);
 
   return (
-    <View>
-      <ScrollView>
-        <AddPostModal
-          visible={showAddModal}
-          onRequestClose={() => setShowAddModal(false)}
-          onSubmit={handleCreatePost}
-        />
+    <View lightColor="#F2F4F7" style={{ padding: 16, flex: 1 }}>
+      <AddPostModal
+        visible={showAddModal}
+        onRequestClose={() => setShowAddModal(false)}
+        onSubmit={handleCreatePost}
+      />
 
-        <EditPostModal
-          postId={postSelected.id}
-          visible={showEditModal}
-          onRequestClose={() => setShowEditModal(false)}
-          onSubmit={handleEditPost}
-        />
-        <View lightColor="#F2F4F7" style={styles.container}>
-          {post.map((item, index) => (
-            <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.description}>{item.body}</Text>
-              <View style={styles.cardOptionContainer}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={styles.cardOptionButton}
-                  onPress={() => {
-                    setShowEditModal(true);
-                    setPostSelected(item);
-                  }}
-                >
-                  <MaterialIcons name="edit" size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={styles.cardOptionButton}
-                >
-                  <MaterialIcons name="delete" size={18} color={"#d42626"} />
-                </TouchableOpacity>
+      <EditPostModal
+        postId={postSelected.id}
+        visible={showEditModal}
+        onRequestClose={() => setShowEditModal(false)}
+        onSubmit={handleEditPost}
+      />
+
+      {getAllPostsRequestStatus.status === "pending" ? (
+        <ActivityIndicator size="large" color="gray" />
+      ) : (
+        <FlatList
+          keyExtractor={(item) => item.id.toString()}
+          data={post}
+          contentContainerStyle={{ rowGap: 8 }}
+          onEndReached={loadMoreData}
+          onEndReachedThreshold={0.1}
+          renderItem={({ item }) => (
+            <View style={styles.container}>
+              <View style={styles.cardContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.description}>{item.body}</Text>
+                <View style={styles.cardOptionContainer}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.cardOptionButton}
+                    onPress={() => {
+                      setShowEditModal(true);
+                      setPostSelected(item);
+                    }}
+                  >
+                    <MaterialIcons name="edit" size={18} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.cardOptionButton}
+                    onPress={() => {
+                      deletePost(item.id);
+                    }}
+                  >
+                    <MaterialIcons name="delete" size={18} color={"#d42626"} />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+            </View>
+          )}
+        />
+      )}
+
       <TouchableOpacity
         activeOpacity={0.7}
         style={styles.addButton}
@@ -97,13 +145,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-start",
-    padding: 18,
-    gap: 16,
   },
   cardContainer: {
     width: "100%",
     padding: 16,
-    gap: 8,
     borderRadius: 12,
     backgroundColor: "#ffffff",
     elevation: 1,
