@@ -5,6 +5,7 @@ import { Text, View } from "@/components/Themed";
 import { usePost } from "@/data/Post";
 import { EditPostRequest } from "@/model/edit-post.request";
 import { MaterialIcons } from "@expo/vector-icons";
+import { DarkTheme, ThemeContext } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -72,6 +73,8 @@ export default function Index() {
   };
 
   useEffect(() => {}, [postSelected]);
+
+  const colorScheme = useColorScheme();
 
   return (
     <View lightColor="#F2F4F7" style={{ padding: 16, flex: 1 }}>
