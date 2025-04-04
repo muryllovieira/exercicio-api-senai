@@ -1,11 +1,10 @@
 import { AddPostModal } from "@/components/AddPostModal";
-import { BaseModal } from "@/components/BaseModal";
 import { EditPostModal } from "@/components/EditPostModal";
 import { Text, View } from "@/components/Themed";
 import { usePost } from "@/data/Post";
 import { EditPostRequest } from "@/model/edit-post.request";
 import { MaterialIcons } from "@expo/vector-icons";
-import { DarkTheme, ThemeContext } from "@react-navigation/native";
+import Colors from "@/constants/Colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -15,7 +14,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  useColorScheme,
+  Switch,
 } from "react-native";
 
 export default function Index() {
@@ -28,12 +27,18 @@ export default function Index() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const toggleSwitch = () => setIsDarkMode((previousState) => !previousState);
+
   const { getAllPosts, post, deletePost, getAllPostsRequestStatus } = usePost();
 
   const loadMoreData = () => {
     if (loading || allDataLoaded) return;
+    setLoading(true);
+
     if (postSelected.length === post.length) {
       setAllDataLoaded(true);
+      setLoading(false);
       return;
     }
 
@@ -72,12 +77,27 @@ export default function Index() {
     setShowEditModal(false);
   };
 
-  useEffect(() => {}, [postSelected]);
-
-  const colorScheme = useColorScheme();
-
   return (
-    <View lightColor="#F2F4F7" style={{ padding: 16, flex: 1 }}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDarkMode
+            ? Colors.dark.background
+            : Colors.light.background,
+        },
+      ]}
+    >
+      <View
+        style={{
+          padding: 24,
+          backgroundColor: isDarkMode
+            ? Colors.dark.background
+            : Colors.light.background,
+        }}
+      >
+        <Switch onValueChange={toggleSwitch} value={isDarkMode} />
+      </View>
       <AddPostModal
         visible={showAddModal}
         onRequestClose={() => setShowAddModal(false)}
@@ -101,31 +121,53 @@ export default function Index() {
           onEndReached={loadMoreData}
           onEndReachedThreshold={0.1}
           renderItem={({ item }) => (
-            <View style={styles.container}>
-              <View style={styles.cardContainer}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.description}>{item.body}</Text>
-                <View style={styles.cardOptionContainer}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles.cardOptionButton}
-                    onPress={() => {
-                      setShowEditModal(true);
-                      setPostSelected(item);
-                    }}
-                  >
-                    <MaterialIcons name="edit" size={18} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles.cardOptionButton}
-                    onPress={() => {
-                      deletePost(item.id);
-                    }}
-                  >
-                    <MaterialIcons name="delete" size={18} color={"#d42626"} />
-                  </TouchableOpacity>
-                </View>
+            <View
+              style={[
+                styles.cardContainer,
+                {
+                  backgroundColor: isDarkMode
+                    ? Colors.dark.background
+                    : Colors.light.background,
+                  borderColor: isDarkMode ? "#fff" : "#000",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.title,
+                  { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+                ]}
+              >
+                {item.title}
+              </Text>
+              <Text
+                style={[
+                  styles.description,
+                  { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+                ]}
+              >
+                {item.body}
+              </Text>
+              <View style={styles.cardOptionContainer}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.cardOptionButton}
+                  onPress={() => {
+                    setShowEditModal(true);
+                    setPostSelected(item);
+                  }}
+                >
+                  <MaterialIcons name="edit" size={18} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.cardOptionButton}
+                  onPress={() => {
+                    deletePost(item.id);
+                  }}
+                >
+                  <MaterialIcons name="delete" size={18} color={"#d42626"} />
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -146,14 +188,13 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-start",
+    padding: 24,
   },
   cardContainer: {
     width: "100%",
     padding: 16,
+    borderWidth: 2,
     borderRadius: 12,
-    backgroundColor: "#ffffff",
     elevation: 1,
   },
   title: {
