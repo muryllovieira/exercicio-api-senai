@@ -13,12 +13,9 @@ import { usePost } from "@/data/Post";
 import { useState } from "react";
 
 interface EditPostModalProps {
-  postId: number;
-
+  postId?: number;
   visible: boolean;
-
   onRequestClose: () => void;
-
   onSubmit: () => void;
 }
 

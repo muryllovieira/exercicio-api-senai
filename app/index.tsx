@@ -16,12 +16,16 @@ import {
   ActivityIndicator,
   Switch,
 } from "react-native";
+import { GetPostsResponse } from "@/model/get-posts.response";
 
 export default function Index() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [postSelected, setPostSelected] = useState<EditPostRequest[]>([]);
+  const [displayedData, setDisplayedData] = useState<GetPostsResponse[]>([]);
+  const [selectedPost, setSelectedPost] = useState<GetPostsResponse | null>(
+    null
+  );
 
   const [allDataLoaded, setAllDataLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,8 +39,7 @@ export default function Index() {
   const loadMoreData = () => {
     if (loading || allDataLoaded) return;
     setLoading(true);
-
-    if (postSelected.length === post.length) {
+    if (displayedData.length === post.length) {
       setAllDataLoaded(true);
       setLoading(false);
       return;
@@ -47,15 +50,8 @@ export default function Index() {
     const max = nextPage * pageSize;
     const newData = post.slice(min, max);
 
-    if (newData.length === 0) {
-      setAllDataLoaded(true);
-    } else {
-      setPostSelected((prevData) =>
-        prevData ? [...prevData, ...newData] : newData
-      );
-      setCurrentPage(nextPage);
-    }
-
+    setDisplayedData((prev) => [...prev, ...newData]);
+    setCurrentPage(currentPage + 1);
     setLoading(false);
   };
 
@@ -65,7 +61,7 @@ export default function Index() {
 
   useEffect(() => {
     const initialValue = post.slice(0, pageSize);
-    setPostSelected(initialValue);
+    setDisplayedData(initialValue);
     setCurrentPage(1);
   }, [post]);
 
@@ -105,7 +101,7 @@ export default function Index() {
       />
 
       <EditPostModal
-        postId={postSelected.id}
+        postId={selectedPost?.id}
         visible={showEditModal}
         onRequestClose={() => setShowEditModal(false)}
         onSubmit={handleEditPost}
@@ -154,7 +150,7 @@ export default function Index() {
                   style={styles.cardOptionButton}
                   onPress={() => {
                     setShowEditModal(true);
-                    setPostSelected(item);
+                    setSelectedPost(item);
                   }}
                 >
                   <MaterialIcons name="edit" size={18} />
